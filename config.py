@@ -38,7 +38,14 @@ class Config:
     BINANCE_BASE_URL = os.getenv("BINANCE_BASE_URL", "")
     
     # ============= RISK MANAGEMENT =============
-    # Maximum USDT risk per single trade (in USDT)
+    # Auto-reinvestment mode: use percentage of balance instead of fixed amount
+    USE_PERCENTAGE_RISK = os.getenv("USE_PERCENTAGE_RISK", "true").lower() == "true"
+    
+    # Percentage of balance to risk per trade (0.0 to 1.0)
+    # Example: 0.50 = 50% of balance per trade (aggressive compounding)
+    RISK_PERCENTAGE = float(os.getenv("RISK_PERCENTAGE", "0.50"))
+    
+    # Maximum USDT risk per single trade (in USDT) - used if USE_PERCENTAGE_RISK=false
     MAX_RISK_PER_TRADE = float(os.getenv("MAX_RISK_PER_TRADE", "10"))
     
     # Maximum number of simultaneous open trades
@@ -96,6 +103,9 @@ def validate_config():
     
     if Config.MAX_RISK_PER_TRADE <= 0:
         raise ValueError("MAX_RISK_PER_TRADE must be positive")
+    
+    if Config.RISK_PERCENTAGE <= 0 or Config.RISK_PERCENTAGE > 1.0:
+        raise ValueError("RISK_PERCENTAGE must be between 0.0 and 1.0")
     
     if Config.MAX_OPEN_TRADES < 1:
         raise ValueError("MAX_OPEN_TRADES must be at least 1")

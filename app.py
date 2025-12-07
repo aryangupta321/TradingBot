@@ -220,12 +220,24 @@ async def receive_signal(request: Request):
         
         # ============= EXECUTE TRADE =============
         try:
+            # Calculate position size based on risk mode
+            if Config.USE_PERCENTAGE_RISK:
+                # Auto-reinvestment: Use percentage of current balance
+                trade_amount = balance * Config.RISK_PERCENTAGE
+                # Ensure minimum notional ($5 for BTCUSDT)
+                trade_amount = max(trade_amount, 5.0)
+                logger.log_info(f"Auto-reinvest mode: ${trade_amount:.2f} ({Config.RISK_PERCENTAGE*100:.0f}% of ${balance:.2f})")
+            else:
+                # Fixed risk mode
+                trade_amount = Config.MAX_RISK_PER_TRADE
+                logger.log_info(f"Fixed risk mode: ${trade_amount:.2f}")
+            
             execution_result = execute_trade(
                 symbol=payload.symbol,
                 action=payload.side,
                 strategy=payload.strategy,
                 confidence=payload.confidence,
-                usdt_amount=Config.MAX_RISK_PER_TRADE
+                usdt_amount=trade_amount
             )
             
             if execution_result['success']:
