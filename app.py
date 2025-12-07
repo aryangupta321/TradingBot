@@ -412,6 +412,8 @@ def execute_trade(
     
     except Exception as e:
         logger.log_error(f"Error executing trade: {e}")
+        import traceback
+        logger.log_error(f"Traceback: {traceback.format_exc()}")
         return {
             'success': False,
             'reason': f"Exception: {str(e)}"
