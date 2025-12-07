@@ -22,6 +22,8 @@ from config import Config, validate_config
 from csv_logger import logger
 from risk import risk_engine
 from binance_client import initialize_binance_client, get_binance_client
+from positions import position_manager
+from exit_manager import exit_manager
 
 
 # ============= DATA MODELS =============
@@ -87,6 +89,9 @@ async def startup_event():
             logger.log_warning(f"Binance connection failed: {str(e)}")
             logger.log_info("Continuing in webhook-only mode")
         
+        # Start exit manager (automatic stop-loss and take-profit)
+        exit_manager.start()
+        
         # Try to log startup info if client available
         try:
             binance = get_binance_client()
@@ -99,6 +104,7 @@ async def startup_event():
         logger.log_info(f"Max trades per day: {Config.MAX_TRADES_PER_DAY}")
         logger.log_info(f"Testnet mode: {Config.USE_TESTNET}")
         logger.log_info("✅ Bot ready to receive signals on webhook")
+        logger.log_info("✅ Exit manager active (automatic SL/TP)")
         logger.log_info("Waiting for TradingView alerts...")
         logger.log_info("=" * 60)
         logger.log_info("Bot ready to receive signals")
@@ -111,7 +117,8 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Log shutdown."""
+    """Clean shutdown."""
+    exit_manager.stop()
     logger.log_info("Bot shutting down")
 
 
@@ -379,6 +386,15 @@ def execute_trade(
         # Record trade for daily limits
         if status == "FILLED" or filled_qty > 0:
             risk_engine.record_trade(symbol, action)
+            
+            # RECORD OPEN POSITION for position management
+            # This allows automatic stop-loss and take-profit
+            position_manager.open_position(
+                symbol=symbol,
+                side=action,
+                quantity=filled_qty,
+                entry_price=avg_price if avg_price > 0 else current_price
+            )
         
         # Track open position if not immediately filled
         if status != "FILLED" and filled_qty == 0:
