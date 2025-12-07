@@ -78,18 +78,29 @@ async def startup_event():
         # Validate configuration
         validate_config()
         
-        # Initialize Binance client
-        if not initialize_binance_client():
-            raise RuntimeError("Failed to initialize Binance client")
+        # Initialize Binance client (skip on Railway due to IP restrictions)
+        try:
+            if not initialize_binance_client():
+                logger.log_warning("Could not connect to Binance on startup (IP restriction - Railway)")
+                logger.log_info("Bot will still accept webhook signals and execute trades when needed")
+        except Exception as e:
+            logger.log_warning(f"Binance connection failed: {str(e)}")
+            logger.log_info("Continuing in webhook-only mode")
         
-        # Log startup info
-        binance = get_binance_client()
-        balance = binance.get_account_balance("USDT")
+        # Try to log startup info if client available
+        try:
+            binance = get_binance_client()
+            balance = binance.get_account_balance("USDT")
+        except:
+            balance = 0
         
         logger.log_info(f"Account USDT Balance: ${balance:.2f}")
         logger.log_info(f"Max risk per trade: ${Config.MAX_RISK_PER_TRADE}")
         logger.log_info(f"Max trades per day: {Config.MAX_TRADES_PER_DAY}")
         logger.log_info(f"Testnet mode: {Config.USE_TESTNET}")
+        logger.log_info("✅ Bot ready to receive signals on webhook")
+        logger.log_info("Waiting for TradingView alerts...")
+        logger.log_info("=" * 60)
         logger.log_info("Bot ready to receive signals")
         logger.log_info("=" * 60)
     
