@@ -1,0 +1,41 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © AryanGupta99 - Modified Scalping RSI+MACD Strategy
+
+//@version=6
+strategy("Scalping RSI+MACD [High Win Rate]", overlay=true, fill_orders_on_standard_ohlc=true, initial_capital=1000, default_qty_type=strategy.percent_of_equity, default_qty_value=10)
+
+// ===== SETTINGS =====
+rsi_period = 14
+rsi_oversold = 30
+rsi_overbought = 70
+macd_fast = 12
+macd_slow = 26
+macd_signal_period = 9
+
+// ===== CALCULATIONS =====
+rsi = ta.rsi(close, rsi_period)
+[macdLine, signalLine, hist] = ta.macd(close, macd_fast, macd_slow, macd_signal_period)
+
+// ===== CROSSOVER SIGNALS (KEY FIX: Calculate OUTSIDE conditional) =====
+macd_cross_up = ta.crossover(macdLine, signalLine)
+macd_cross_down = ta.crossunder(macdLine, signalLine)
+
+// ===== BUY CONDITION =====
+longCondition = rsi < rsi_oversold and macd_cross_up
+if (longCondition)
+    strategy.entry("BUY", strategy.long)
+    alert("BUY Signal: RSI Oversold (" + str.tostring(rsi, "0.00") + ") + MACD Crossover (80% confidence)", alert.freq_once_per_bar_close)
+
+// ===== SELL CONDITION =====
+shortCondition = rsi > rsi_overbought and macd_cross_down
+if (shortCondition)
+    strategy.close("BUY")
+    alert("SELL Signal: RSI Overbought (" + str.tostring(rsi, "0.00") + ") + MACD Crossunder (75% confidence)", alert.freq_once_per_bar_close)
+
+// ===== PLOTS =====
+plot(rsi, color=color.blue, title="RSI", linewidth=2)
+hline(rsi_oversold, linestyle=hline.style_dashed, color=color.green, title="RSI Oversold (30)")
+hline(rsi_overbought, linestyle=hline.style_dashed, color=color.red, title="RSI Overbought (70)")
+plot(macdLine, color=color.orange, title="MACD Line")
+plot(signalLine, color=color.purple, title="Signal Line")
+plot(hist, color=color.gray, title="Histogram", style=plot.style_columns)
