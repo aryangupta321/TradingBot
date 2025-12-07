@@ -5,7 +5,6 @@ This runs every 30 seconds to check:
 2. Take-profit levels - if price rises 2.5%, automatically sell to lock in profit
 """
 
-import asyncio
 import threading
 from typing import Optional
 
@@ -48,6 +47,7 @@ class ExitManager:
     
     def _monitor_loop(self):
         """Main monitoring loop - runs in background thread."""
+        import time
         while self.running:
             try:
                 self._check_all_positions()
@@ -58,7 +58,7 @@ class ExitManager:
             for _ in range(self.check_interval):
                 if not self.running:
                     break
-                asyncio.sleep(1)
+                time.sleep(1)
     
     def _check_all_positions(self):
         """Check all open positions for SL/TP triggers."""

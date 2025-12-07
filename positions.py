@@ -19,7 +19,7 @@ class PositionManager:
     def __init__(self):
         """Initialize position manager."""
         self._lock = threading.Lock()
-        self.positions_file = Path(Config.PROJECT_ROOT) / "logs" / "positions.csv"
+        self.positions_file = Path("logs") / "positions.csv"
         self._ensure_positions_file()
     
     def _ensure_positions_file(self):
