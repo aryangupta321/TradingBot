@@ -190,7 +190,10 @@ class BinanceAPIClient:
                 )
                 return None
             
-            return quantity
+            # Convert to string with proper decimal formatting (avoid scientific notation)
+            # Format with sufficient decimal places, then strip trailing zeros
+            quantity_str = f"{quantity:.{precision}f}"
+            return float(quantity_str)  # Return as float, but ensure proper formatting
         
         except Exception as e:
             logger.log_error(f"Error calculating buy quantity: {e}")
@@ -215,20 +218,24 @@ class BinanceAPIClient:
             Order dict with details, or None if failed
         """
         try:
+            # Convert quantity to string to avoid scientific notation issues
+            quantity_str = f"{quantity:.8f}".rstrip('0').rstrip('.')
+            
             if price is None:
                 # Market order - executes immediately at best available price
-                logger.log_info(f"Placing MARKET BUY order: {quantity} {symbol}")
+                logger.log_info(f"Placing MARKET BUY order: {quantity_str} {symbol}")
                 order = self.client.order_market_buy(
                     symbol=symbol,
-                    quantity=quantity
+                    quantity=quantity_str
                 )
             else:
                 # Limit order - executes only at specified price or better
-                logger.log_info(f"Placing LIMIT BUY order: {quantity} {symbol} @ ${price}")
+                price_str = f"{price:.8f}".rstrip('0').rstrip('.')
+                logger.log_info(f"Placing LIMIT BUY order: {quantity_str} {symbol} @ ${price_str}")
                 order = self.client.order_limit_buy(
                     symbol=symbol,
-                    quantity=quantity,
-                    price=price
+                    quantity=quantity_str,
+                    price=price_str
                 )
             
             order_id = order.get('orderId')
@@ -264,20 +271,24 @@ class BinanceAPIClient:
             Order dict with details, or None if failed
         """
         try:
+            # Convert quantity to string to avoid scientific notation issues
+            quantity_str = f"{quantity:.8f}".rstrip('0').rstrip('.')
+            
             if price is None:
                 # Market order
-                logger.log_info(f"Placing MARKET SELL order: {quantity} {symbol}")
+                logger.log_info(f"Placing MARKET SELL order: {quantity_str} {symbol}")
                 order = self.client.order_market_sell(
                     symbol=symbol,
-                    quantity=quantity
+                    quantity=quantity_str
                 )
             else:
                 # Limit order
-                logger.log_info(f"Placing LIMIT SELL order: {quantity} {symbol} @ ${price}")
+                price_str = f"{price:.8f}".rstrip('0').rstrip('.')
+                logger.log_info(f"Placing LIMIT SELL order: {quantity_str} {symbol} @ ${price_str}")
                 order = self.client.order_limit_sell(
                     symbol=symbol,
-                    quantity=quantity,
-                    price=price
+                    quantity=quantity_str,
+                    price=price_str
                 )
             
             order_id = order.get('orderId')
