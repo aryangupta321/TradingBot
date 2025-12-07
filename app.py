@@ -90,8 +90,7 @@ async def startup_event():
             logger.log_info("Continuing in webhook-only mode")
         
         # Start exit manager (automatic stop-loss and take-profit)
-        # TEMPORARILY DISABLED FOR TESTING
-        # exit_manager.start()
+        exit_manager.start()
         
         # Try to log startup info if client available
         try:
@@ -119,7 +118,7 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """Clean shutdown."""
-    # exit_manager.stop()
+    exit_manager.stop()
     logger.log_info("Bot shutting down")
 
 
